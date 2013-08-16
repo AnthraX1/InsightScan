@@ -289,8 +289,8 @@ def scanipport():
 	global lock
 	while True:
 		host,port=sq.get()
-		sd.settimeout(TIMEOUT)
 		sd=sk.socket(sk.AF_INET, sk.SOCK_STREAM)
+		sd.settimeout(TIMEOUT)
 		try:
 			sd.connect((host,port))
 			if options.genlist==True:
