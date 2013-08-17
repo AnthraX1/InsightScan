@@ -290,7 +290,7 @@ def scanipport():
 	while True:
 		host,port=sq.get()
 		sd=sk.socket(sk.AF_INET, sk.SOCK_STREAM)
-		sd.settimeout(TIMEOUT)
+		sd.settimeout(TIMEOUT)		
 		try:
 			sd.connect((host,port))
 			if options.genlist==True:
@@ -357,7 +357,7 @@ def scanservice():
 			lock.release()	
 			sd.close()
 			if options.downpage==True and service=='http':				
-				dlpage(ip,port)
+				dlpage(host,port)
 
 		sq.task_done()	
 
@@ -381,17 +381,34 @@ def dlpage(ip,port):
 	global page,lock
 	page+='<h1>'+ip+':'+str(port)+'</h1><br>'
 	for url in URLS:
-		c=httplib.HTTPConnection(ip+':'+str(port))
-		c.request('GET','/'+url)
-		r=c.getresponse()
-		#print url,r.status
-		if r.status in [200,301,302,401]:
-			if url=='':
-				url='Homepage'
-			lock.acquire()
-			print ip+':'+str(port),url,'exists.','Code:',r.status
-			page+='<h2>'+url+'</h2><br>'+r.read()
-			lock.release()
+		try:
+			c=httplib.HTTPConnection(ip+':'+str(port))
+			c.request('GET','/'+url)
+			r=c.getresponse()
+			#print url,r.status
+		except:
+			return
+		if url=='':
+			url='Homepage'
+		lock.acquire()
+		if r.status==200:
+			result=r.read()
+			tt=re.search('<title>(.*)</title>',result)
+			try:
+				title=tt.group(1)
+			except:
+				title=''
+			try:
+				header=r.getheader('Server')
+			except:
+				header=''
+			print ip+':'+str(port),url,'exists.','Code:',r.status,header,title
+			page+='<h2>'+url+'</h2><br>'+result
+		if r.status==401:
+			print ip+':'+str(port),url,'exists.','Code:',r.status,'Auth required'
+		if r.status in [301,302]:
+			print ip+':'+str(port),url,'Code:',r.status
+		lock.release()
 		c.close()
 
 	
