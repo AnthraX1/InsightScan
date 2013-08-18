@@ -16,6 +16,14 @@ Options:
   -T TIMEOUT, --timeout=TIMEOUT
                         Scan timeout, per thread
                         
+  -n NETWORK, --network=NETWORK
+                       Quick Network discovery, find reachable networks.
+                       Local IP range only. 
+                       A=10.0.0.0-10.255.255.255
+                       B=172.16.0.0-172.31.255.255
+                       C=192.168.0.0-192.168.255.255 
+                       Example: -n B will try Class B addresses                       
+                        
   -p PORTS, --portlist=PORTS
                         Customize port list, separate with ',' example:
                         21,22,23,25 ...
