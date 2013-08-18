@@ -275,9 +275,11 @@ def pinger():
 		ip=q.get()
 		if platform.system()=='Linux':
 			p=Popen(['ping','-c 2',ip],stdout=PIPE)
-			m = re.search('(.*)\srecieved', p.stdout.read())
-			if m!=0:
-				pinglist.append(ip)
+			m = re.search('(\d)\sreceived', p.stdout.read())
+			try:
+				if m.group(1)!='0':
+					pinglist.append(ip)
+			except:pass		
 		if platform.system()=='Windows':
 			p=Popen('ping -n 2 ' + ip, stdout=PIPE)
 			m = re.search('TTL', p.stdout.read())
@@ -295,16 +297,20 @@ def pingsubnet(q):
 		if platform.system()=='Linux':
 			try:
 				p=Popen(['ping','-c 2',gt],stdout=PIPE)
-				m = re.search('(.*)\srecieved', p.stdout.read())
+				m = re.search('(\d)\sreceived', p.stdout.read())
 				gt=gt.split('.')
 				gt=gt[0]+'.'+gt[1]+'.'+gt[2]+'.'+'0'
-				if m!=0:
-					pinglist.append(gt)
+			except:pass
+			try:
+				if m.group(1)!='0':
+					pinglist.append(gt)	
 				else:
 					p=Popen(['ping','-c 2 -b',bc],stdout=PIPE)
-					m = re.search('(.*)\srecieved', p.stdout.read())
-					if m!=0:
-						pinglist.append(gt)
+					m = re.search('(\d)\sreceived', p.stdout.read())
+					try:
+						if m.group(1)!='0':
+							pinglist.append(gt)
+					except:pass
 			except:pass			
 		if platform.system()=='Windows':
 			try:
