@@ -20,7 +20,7 @@
     \/___/  \/__/\/_/ \/___/  \/___/ 
                                      
 '''
-
+#V0.99
 
 import platform
 import sys
@@ -285,6 +285,73 @@ def pinger():
 				pinglist.append(ip)
 		q.task_done()
 
+def pingsubnet(q):
+	global pinglist
+	pinglist=[]
+	while True:
+		tup=q.get()
+		(gt,bc)=tup
+		sys.stdout.write('.')
+		if platform.system()=='Linux':
+			try:
+				p=Popen(['ping','-c 2',gt],stdout=PIPE)
+				m = re.search('(.*)\srecieved', p.stdout.read())
+				gt=gt.split('.')
+				gt=gt[0]+'.'+gt[1]+'.'+gt[2]+'.'+'0'
+				if m!=0:
+					pinglist.append(gt)
+				else:
+					p=Popen(['ping','-c 2 -b',bc],stdout=PIPE)
+					m = re.search('(.*)\srecieved', p.stdout.read())
+					if m!=0:
+						pinglist.append(gt)
+			except:pass			
+		if platform.system()=='Windows':
+			try:
+				p=Popen('ping -n 2 ' + gt, stdout=PIPE)
+				m = re.search('TTL', p.stdout.read())
+				gt=gt.split('.')
+				gt=gt[0]+'.'+gt[1]+'.'+gt[2]+'.'+'0'
+				if m:	
+					pinglist.append(gt)
+				else:
+					p=Popen('ping -n 2 ' + bc, stdout=PIPE)
+					m = re.search('TTL', p.stdout.read())
+					if m:
+						pinglist.append(gt)
+			except:pass			
+		q.task_done()		
+
+def networkdiscovery(subclass):
+	if subclass not in ['A','B','C']:
+		print 'Option incorrect, only A,B,C are allowed'
+		exit()
+	global pinglist	
+	iplist=[]	
+	if subclass=='A':
+		for i in xrange(256):
+			for j in xrange(256):
+				iplist.append(('10.'+str(i)+'.'+str(j)+'.1','10.'+str(i)+'.'+str(j)+'.255'))
+	if subclass=='B':
+		for i in xrange(16,32):
+			for j in xrange(256):
+				iplist.append(('172.'+str(i)+'.'+str(j)+'.1','172.'+str(i)+'.'+str(j)+'.255'))
+	if 	subclass=='C':
+		for i in xrange(256):
+			iplist.append(('192.168.'+str(i)+'.1','192.168.'+str(i)+'.255'))
+	q=Queue()	
+	for i in range(NUM):
+		th = Thread(target=pingsubnet,args=(q,))
+		th.setDaemon(True)
+		th.start()
+		
+	
+	for ip in iplist:
+		q.put(ip)
+	q.join()
+	for addr in pinglist:
+		print addr,'is reachable.'
+		
 def scanipport():
 	global lock
 	while True:
@@ -420,6 +487,7 @@ if __name__ == "__main__":
 	parser.add_option("-t", "--threads", dest="NUM",help="Maximum threads, default 50")
 	parser.add_option("-T", "--timeout", dest="TIMEOUT",help="Scan timeout, per thread")
 	parser.add_option("-p", "--portlist", dest="PORTS",help="Customize port list, separate with ',' example: 21,22,23,25 ...")
+	parser.add_option("-n", "--network", dest="network",help="Quick Network discovery, find reachable networks. Local IP range only. A=10.0.0.0-10.255.255.255\nB=172.16.0.0-172.31.255.255\nC=192.168.0.0-192.168.255.255\nExample: -n B will try Class B addresses")
 	parser.add_option("-N", '--noping', action="store_true", dest="noping",help="Skip ping sweep, port scan whether targets are alive or not")
 	parser.add_option("-P", '--pingonly', action="store_true", dest="noscan",help="Ping scan only,disable port scan")
 	parser.add_option("-S", '--service', action="store_true", dest="service",help="Service detection, using banner and signature")
@@ -432,6 +500,9 @@ if __name__ == "__main__":
 		print 'Scanning with',NUM,'threads...'
 	if options.TIMEOUT != None and int(options.TIMEOUT)!=0:
 		TIMEOUT=int(options.TIMEOUT)
+	if options.network!=None:
+		networkdiscovery(options.network)
+		sys.exit()	
 	if len(args)<1:
 		parser.print_help()
 		sys.exit()
