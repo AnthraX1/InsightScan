@@ -22,7 +22,11 @@ Options:
                        A=10.0.0.0-10.255.255.255
                        B=172.16.0.0-172.31.255.255
                        C=192.168.0.0-192.168.255.255 
-                       Example: -n B will try Class B addresses                       
+                       Example: -n B will try Class B addresses     
+                       
+  -H HOSTNAME, --findhost=HOSTNAME
+                        Help you find which IP address is running a particular
+                        virtual host. Example: 192.168.0.0/24 -H example.com  
                         
   -p PORTS, --portlist=PORTS
                         Customize port list, separate with ',' example:
