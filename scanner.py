@@ -36,7 +36,7 @@ from Queue import Queue
 NUM = 50
 TIMEOUT=2
 PORTS=[21,22,23,25,80,81,110,135,139,389,443,445,873,1433,1434,1521,2433,3306,3307,3389,5800,5900,8080,22222,22022,27017,28017]
-URLS=['','phpinfo.php','phpmyadmin/','xmapp/','zabbix/','jmx-console/','.svn/entries','nagios/','index.action','login.action']
+URLS=['','phpinfo.php','phpmyadmin/','xampp/','zabbix/','jmx-console/','.svn/entries','nagios/','index.action','login.action']
 
 PROBES=[
 '\r\n\r\n',
@@ -46,6 +46,8 @@ PROBES=[
 '\x80\0\0\x28\x72\xFE\x1D\x13\0\0\0\0\0\0\0\x02\0\x01\x86\xA0\0\x01\x97\x7C\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0',
 '\x03\0\0\x0b\x06\xe0\0\0\0\0\0',
 '\0\0\0\xa4\xff\x53\x4d\x42\x72\0\0\0\0\x08\x01\x40\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x40\x06\0\0\x01\0\0\x81\0\x02PC NETWORK PROGRAM 1.0\0\x02MICROSOFT NETWORKS 1.03\0\x02MICROSOFT NETWORKS 3.0\0\x02LANMAN1.0\0\x02LM1.2X002\0\x02Samba\0\x02NT LANMAN 1.0\0\x02NT LM 0.12\0',
+'\x80\x9e\x01\x03\x01\x00u\x00\x00\x00 \x00\x00f\x00\x00e\x00\x00d\x00\x00c\x00\x00b\x00\x00:\x00\x009\x00\x008\x00\x005\x00\x004\x00\x003\x00\x002\x00\x00/\x00\x00\x1b\x00\x00\x1a\x00\x00\x19\x00\x00\x18\x00\x00\x17\x00\x00\x16\x00\x00\x15\x00\x00\x14\x00\x00\x13\x00\x00\x12\x00\x00\x11\x00\x00\n\x00\x00\t\x00\x00\x08\x00\x00\x06\x00\x00\x05\x00\x00\x04\x00\x00\x03\x07\x00\xc0\x06\x00@\x04\x00\x80\x03\x00\x80\x02\x00\x80\x01\x00\x80\x00\x00\x02\x00\x00\x01\xe4i<+\xf6\xd6\x9b\xbb\xd3\x81\x9f\xbf\x15\xc1@\xa5o\x14,M \xc4\xc7\xe0\xb6\xb0\xb2\x1f\xf9)\xe8\x98',
+'\x16\x03\0\0S\x01\0\0O\x03\0?G\xd7\xf7\xba,\xee\xea\xb2`~\xf3\0\xfd\x82{\xb9\xd5\x96\xc8w\x9b\xe6\xc4\xdb<=\xdbo\xef\x10n\0\0(\0\x16\0\x13\0\x0a\0f\0\x05\0\x04\0e\0d\0c\0b\0a\0`\0\x15\0\x12\0\x09\0\x14\0\x11\0\x08\0\x06\0\x03\x01\0',
 '< NTP/1.2 >\n',
 '< NTP/1.1 >\n',
 '< NTP/1.0 >\n',
@@ -172,11 +174,16 @@ SIGNS=[
 'socks|^\x05[\x00-\x08]\x00',
 'ssh|^SSH-',
 'ssh|^SSH-.*openssh',
-'ssl|^\x15\x03',
-'ssl|^\x16\x03',
-'ssl|^\x82\xad',
+'ssl|^..\x04\0.\0\x02',
+'ssl|^\x16\x03\x01..\x02...\x03\x01',
+'ssl|^\x16\x03\0..\x02...\x03\0',
 'ssl|SSL.*GET_CLIENT_HELLO',
 'ssl|-ERR .*tls_start_servertls',
+'ssl|^\x16\x03\0\0J\x02\0\0F\x03\0',
+'ssl|^\x16\x03\0..\x02\0\0F\x03\0',
+'ssl|^\x15\x03\0\0\x02\x02\.*',
+'ssl|^\x16\x03\x01..\x02...\x03\x01',
+'ssl|^\x16\x03\0..\x02...\x03\0',
 'sybase|^\x04\x01\x00',
 'telnet|^\xff\xfd',
 'telnet|Telnet is disabled now',
@@ -378,7 +385,13 @@ def scanipport():
 				lock.release()
 			sd.close()
 			if options.downpage==True and port in [80,81,1080,8080]:				
-				dlpage(ip,port)
+				dlpage(host,port)
+			if options.downpage==True and port ==443:
+				dlpage(host,port,True)
+			if options.hostname!=None and port in [80,81,1080,8080]:
+				findhost(host,port,options.hostname)
+			if options.hostname!=None and port ==443:
+				findhost(host,port,options.hostname,True)	
 		except:
 			pass
 		sq.task_done()		
@@ -431,7 +444,12 @@ def scanservice():
 			sd.close()
 			if options.downpage==True and service=='http':				
 				dlpage(host,port)
-
+			if options.downpage==True and service=='ssl':
+				dlpage(host,port,True)
+			if options.hostname!=None and service=='http':				
+				findhost(host,port,options.hostname)
+			if options.hostname!=None and service=='ssl':
+				findhost(host,port,options.hostname,True)				
 		sq.task_done()	
 
 def prepsigns():
@@ -450,17 +468,25 @@ def matchbanner(banner,slist):
 			return item[0]
 	return 'Unknown'
 	
-def dlpage(ip,port):
+def dlpage(ip,port,ssl=False):
 	global page,lock
 	page+='<h1>'+ip+':'+str(port)+'</h1><br>'
 	for url in URLS:
-		try:
-			c=httplib.HTTPConnection(ip+':'+str(port))
-			c.request('GET','/'+url)
-			r=c.getresponse()
-			#print url,r.status
-		except:
-			return
+		if ssl==True:
+			try:
+				c=httplib.HTTPSConnection(ip+':'+str(port))
+				c.request('GET','/'+url)
+				r=c.getresponse()
+			except:
+				return
+		else:
+			try:
+				c=httplib.HTTPConnection(ip+':'+str(port))
+				c.request('GET','/'+url)
+				r=c.getresponse()
+				#print url,r.status
+			except:
+				return
 		if url=='':
 			url='Homepage'
 		lock.acquire()
@@ -485,15 +511,55 @@ def dlpage(ip,port):
 		c.close()
 
 	
+def findhost(ip,port,hostname,ssl=False):
+	global lock
+	if ssl==True:
+		try:
+			c=httplib.HTTPSConnection(ip+':'+str(port))
+			header={"Host":hostname}
+			c.request('GET','/','',header)
+			r=c.getresponse()
+		except:
+			return
+	else:
+		try:
+			c=httplib.HTTPConnection(ip+':'+str(port))
+			header={"Host":hostname}
+			c.request('GET','/','',header)
+			r=c.getresponse()
+			#print url,r.status
+		except:
+			return
+	if r.status==200:
+		try:
+			redirect=r.getheader('Location')
+		except:
+			pass
+		try:	
+			result=r.read()
+			tt=re.search('<title>(.*)</title>',result)
+		except:
+			pass
+		try:
+			title=tt.group(1)
+		except:
+			title=''
+		lock.acquire()	
+		if redirect!=None:
+			print hostname,'running on',ip+':'+str(port),'Location',redirect
+		else:	
+			print hostname,'running on',ip+':'+str(port),'Title:',title
+		lock.release()		
+	c.close()	
 	
-		
 if __name__ == "__main__":
-	usage="usage: InsightScan.py <hosts[/24|/CIDR]> [start port] [end port] -t threads\n\nExample: InsightScan.py 192.168.0.0/24 1 1024 -t 20"
+	usage="usage: insightscan.py <hosts[/24|/CIDR]> [start port] [end port] -t threads\n\nExample: insightscan.py 192.168.0.0/24 1 1024 -t 20"
 	parser = OptionParser(usage=usage)
 	parser.add_option("-t", "--threads", dest="NUM",help="Maximum threads, default 50")
 	parser.add_option("-T", "--timeout", dest="TIMEOUT",help="Scan timeout, per thread")
-	parser.add_option("-p", "--portlist", dest="PORTS",help="Customize port list, separate with ',' example: 21,22,23,25 ...")
 	parser.add_option("-n", "--network", dest="network",help="Quick Network discovery, find reachable networks. Local IP range only. A=10.0.0.0-10.255.255.255\nB=172.16.0.0-172.31.255.255\nC=192.168.0.0-192.168.255.255\nExample: -n B will try Class B addresses")
+	parser.add_option("-H", "--findhost", dest="hostname",help="Help you find which IP address is running a particular virtual host.\nExample: 192.168.0.0/24 -H example.com")
+	parser.add_option("-p", "--portlist", dest="PORTS",help="Customize port list, separate with ',' example: 21,22,23,25 ...")
 	parser.add_option("-N", '--noping', action="store_true", dest="noping",help="Skip ping sweep, port scan whether targets are alive or not")
 	parser.add_option("-P", '--pingonly', action="store_true", dest="noscan",help="Ping scan only,disable port scan")
 	parser.add_option("-S", '--service', action="store_true", dest="service",help="Service detection, using banner and signature")
