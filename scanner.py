@@ -700,7 +700,7 @@ if __name__ == "__main__":
 	else:
 		iplist=parseIPlist(options.iplist)
 	#print iplist	
-	if len(args)==3:
+	if options.iplist==None and len(args)==3:
 		startport=int(args[1])
 		endport=int(args[2])
 		if startport>endport:
@@ -709,6 +709,15 @@ if __name__ == "__main__":
 		PORTS=[]
 		for i in xrange(startport,endport+1):
 			PORTS.append(i)
+	if options.iplist!=None and len(args)==2:
+		startport=int(args[0])
+		endport=int(args[1])
+		if startport>endport:
+			print 'start port must be smaller or equal to end port'
+			sys.exit()
+		PORTS=[]
+		for i in xrange(startport,endport+1):
+			PORTS.append(i)		
 	if options.PORTS!= None:
 		PORTS=[int(pn) for pn in options.PORTS.split(',') ]
 	global page		
