@@ -699,7 +699,7 @@ if __name__ == "__main__":
 				iplist=listCIDR(ipaddr)
 	else:
 		iplist=parseIPlist(options.iplist)
-	print iplist	
+	#print iplist	
 	if len(args)==3:
 		startport=int(args[1])
 		endport=int(args[2])
