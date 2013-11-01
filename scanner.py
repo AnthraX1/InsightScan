@@ -1,11 +1,26 @@
 #coding:utf-8
 #!/usr/bin/env python
+
 '''
-Insight-labs.org
-Anthr@X
+ ______							     __	  __	  
+/\__  _\				  __		/\ \	/\ \__   
+\/_/\ \/	 ___	 ____/\_\	 __\ \ \___\ \ ,_\  
+   \ \ \   /' _ `\  /',__\/\ \  /'_ `\ \  _ `\ \ \/  
+	\_\ \__/\ \/\ \/\__, `\ \ \/\ \L\ \ \ \ \ \ \ \_ 
+	/\_____\ \_\ \_\/\____/\ \_\ \____ \ \_\ \_\ \__\
+	\/_____/\/_/\/_/\/___/  \/_/\/___L\ \/_/\/_/\/__/
+								  /\____/			
+								  \_/__/			 
+ __ Anthr@X		__				
+/\ \			  /\ \			   
+\ \ \		 __  \ \ \____	____  
+ \ \ \  __  /'__`\ \ \ '__`\  /',__\ 
+  \ \ \L\ \/\ \L\.\_\ \ \L\ \/\__, `\
+   \ \____/\ \__/.\_\\ \_,__/\/\____/
+	\/___/  \/__/\/_/ \/___/  \/___/ 
 									 
 '''
-#V1.00
+#V1.1
 
 import platform
 import sys
@@ -610,11 +625,38 @@ def findhost(ip,port,hostname,ssl=False):
 			print hostname,'running on',ip+':'+str(port),'Title:',title
 		lock.release()		
 	c.close()	
+
+def parseIPlist(filename):
+	iplist=[]
+	try:
+		f = open(filename)
+	except:
+		print 'File not found'
+		exit()
+	lines = f.readlines()
+	cnt=1
+	for ipaddr in lines:
+		ipaddr=ipaddr.strip()
+		cnt+=1
+		try:
+			sk.inet_aton(ipaddr)
+			iplist.append(ipaddr)
+		except:
+			if not validateCIDRBlock(ipaddr):
+				print 'IP address not valid at line '+cnt
+				sys.exit()
+			else:
+				iplist=listCIDR(ipaddr)
+				
+	f.close()
+	return set(iplist)
+
 	
 if __name__ == "__main__":
 	usage="usage: insightscan.py <hosts[/24|/CIDR]> [start port] [end port] -t threads\n\nExample: insightscan.py 192.168.0.0/24 1 1024 -t 20"
 	parser = OptionParser(usage=usage)
 	parser.add_option("-t", "--threads", dest="NUM",help="Maximum threads, default 50")
+	parser.add_option("-I", "--iplist", dest="iplist",help="Load IP list from file, use IP or CIDR, one per line")	
 	parser.add_option("-T", "--timeout", dest="TIMEOUT",help="Scan timeout, per thread")
 	parser.add_option("-n", "--network", dest="network",help="Quick Network discovery, find reachable networks. Local IP range only. A=10.0.0.0-10.255.255.255\nB=172.16.0.0-172.31.255.255\nC=192.168.0.0-192.168.255.255\nExample: -n B will try Class B addresses")
 	parser.add_option("-H", "--findhost", dest="hostname",help="Help you find which IP address is running a particular virtual host.\nExample: 192.168.0.0/24 -H example.com")
@@ -634,26 +676,30 @@ if __name__ == "__main__":
 	if options.network!=None:
 		networkdiscovery(options.network)
 		sys.exit()	
-	if len(args)<1:
+	if len(args)<1 and options.iplist==None:
 		parser.print_help()
 		sys.exit()
 	if options.noping== True and options.noscan == True:
 		print 'ERROR: Cannot use -N and -P together'
 		sys.exit()
-	iplist=[]	
-	ipaddr=args[0]
-	if len(args)==2:
-		print 'Must specify end port'
-		sys.exit()
-	try:
-		sk.inet_aton(ipaddr)
-		iplist.append(ipaddr)
-	except:		
-		if not validateCIDRBlock(ipaddr):
-			print 'IP address not valid!'
+	iplist=[]
+	if options.iplist==None:
+		ipaddr=args[0]
+		if len(args)==2:
+			print 'Must specify end port'
 			sys.exit()
-		else:
-			iplist=listCIDR(ipaddr)
+		try:
+			sk.inet_aton(ipaddr)
+			iplist.append(ipaddr)
+		except:		
+			if not validateCIDRBlock(ipaddr):
+				print 'IP address not valid!'
+				sys.exit()
+			else:
+				iplist=listCIDR(ipaddr)
+	else:
+		iplist=parseIPlist(options.iplist)
+	print iplist	
 	if len(args)==3:
 		startport=int(args[1])
 		endport=int(args[2])
