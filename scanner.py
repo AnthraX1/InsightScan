@@ -646,7 +646,7 @@ def parseIPlist(filename):
 				print 'IP address not valid at line '+cnt
 				sys.exit()
 			else:
-				iplist=listCIDR(ipaddr)
+				iplist=iplist+listCIDR(ipaddr)
 				
 	f.close()
 	return set(iplist)
