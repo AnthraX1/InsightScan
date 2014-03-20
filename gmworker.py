@@ -98,7 +98,7 @@ def scanner():
 		try:
 			r=urllib2.urlopen(req,None,TIMEOUT)
 			content=r.read()
-			headers=getheader(r)
+			headers=unicode(getheader(r), errors='ignore')
 			title=gettitle(content)
 			ip=getip(domain)
 			data={}
