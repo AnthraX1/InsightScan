@@ -39,7 +39,7 @@ def getip(domain):
 	return ip
 
 def worker_scan(worker,job):
-
+	print 'Retrieving task...'
 	dlist=processlist(job.data)
 	if dlist==False:
 		print 'No list'
@@ -73,7 +73,13 @@ def processresult():
 	res=dict(RESULT)
 	RESULT.clear()
 	lock.release()
-	data=base64.b64encode(zlib.compress(json.dumps(res)))
+	try:
+		data=base64.b64encode(zlib.compress(json.dumps(res)))
+	except Exception as e:
+		print str(e)
+		print res
+		print 'SEND DATA ERROR'
+		return False	
 	stat=postback({"type":"data","data":data})
 	print 'sent data'
 
@@ -85,7 +91,13 @@ def processerr():
 	res=dict(ERROR)
 	ERROR.clear()
 	lockerr.release()
-	data=base64.b64encode(zlib.compress(json.dumps(res)))
+	try:
+		data=base64.b64encode(zlib.compress(json.dumps(res)))
+	except Exception as e:
+		print str(e)
+		print res
+		print 'SEND ERRDATA ERROR'
+		return False
 	stat=postback({"type":"error","data":data})
 	print 'sent err'
 
@@ -113,7 +125,7 @@ def scanner():
 			#print content #debug only
 		except Exception as e:
 			lockerr.acquire()
-			ERROR[domain]=str(e)
+			ERROR[domain]=unicode(str(e), errors='ignore')
 			lockerr.release()
 		q.task_done()
 
@@ -186,6 +198,5 @@ if __name__ == "__main__":
 	ts.start()
 	print 'Background thread started'
 	worker.work()
-
 
 
