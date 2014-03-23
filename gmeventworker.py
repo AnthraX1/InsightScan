@@ -14,7 +14,7 @@ from gevent.queue import Queue
 from gevent.coros import BoundedSemaphore
 
 THREADS = 500
-TIMEOUT=5
+TIMEOUT = 2
 GMSERVER=['']
 REPORTURL=''
 KEY=''
