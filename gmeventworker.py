@@ -13,7 +13,7 @@ from threading import Thread
 from gevent.queue import Queue
 from gevent.coros import BoundedSemaphore
 
-THREADS = 100
+THREADS = 500
 TIMEOUT=5
 GMSERVER=['']
 REPORTURL=''
