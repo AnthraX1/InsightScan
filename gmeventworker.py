@@ -11,7 +11,7 @@ import json
 import threading
 from threading import Thread
 from gevent.queue import Queue
-from gevent.lock import BoundedSemaphore
+from gevent.coros import BoundedSemaphore
 
 THREADS = 100
 TIMEOUT=5
