@@ -11,6 +11,7 @@ import json
 import threading
 from threading import Thread
 from gevent.queue import Queue
+from gevent.coros import BoundedSemaphore
 
 THREADS = 100
 TIMEOUT=5
@@ -20,8 +21,9 @@ KEY=''
 
 RESULT={}
 ERROR={}
-lock = threading.Lock()
-lockerr=threading.Lock()
+lock = BoundedSemaphore(1)
+lockerr=BoundedSemaphore(1)
+
 def processlist(data):
 	res=''
 	try:
