@@ -62,7 +62,7 @@ def hexwrite(s,fn):
     lock.release()
 
 
-def recvall(s, length, timeout=5):
+def recvall(s, length, timeout=5): 
     endtime = time.time() + timeout
     rdata = ''
     remain = length
