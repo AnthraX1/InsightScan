@@ -40,7 +40,7 @@ hb = h2bin('''
 01 40 00
 ''')
 
-def hexdump(s,fn):
+def hexdump(s):
     for b in xrange(0, len(s), 64):
         lin = [c for c in s[b : b + 16]]
         hxdat = ' '.join('%02X' % ord(c) for c in lin)
@@ -152,6 +152,9 @@ def fuckit(domain,fn):
 def main():
     while True:
         domain=raw_input("Enter domain name: ")
+        if len(domain)<5:
+            print 'wrong domain name'
+            continue
         print 'fucking '+domain+'...'
         fn=open(domain+'.txt','a')
         for j in xrange(THREADS):
