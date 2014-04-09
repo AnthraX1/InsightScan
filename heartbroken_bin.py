@@ -154,7 +154,6 @@ def main():
         except:
             port=443 
         print 'fucking '+domain+' @ port '+str(port)+'...'
-        continue
         fn=open(domain+'.bin','ab')
         for j in xrange(THREADS):
                 t = Process(target=fuckit,args=(domain,port,fn))
