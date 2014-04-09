@@ -2,6 +2,7 @@
 
 # Quick and dirty demonstration of CVE-2014-0160 by Jared Stafford (jspenguin@jspenguin.org)
 # The author disclaims copyright to this source code.
+# Multi process and bin dump version by anthrax@insight-labs.org
 import sys
 import struct
 import socket
