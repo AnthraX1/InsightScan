@@ -2,7 +2,7 @@
 #!/usr/bin/env python
 
 '''
- ______							     __	  __	  
+ ______							  __	  __	  
 /\__  _\				  __		/\ \	/\ \__   
 \/_/\ \/	 ___	 ____/\_\	 __\ \ \___\ \ ,_\  
    \ \ \   /' _ `\  /',__\/\ \  /'_ `\ \  _ `\ \ \/  
@@ -20,13 +20,17 @@
 	\/___/  \/__/\/_/ \/___/  \/___/ 
 									 
 '''
-#V1.1
+#V1.00
 
 import platform
 import sys
 import socket as sk
 import httplib
-from subprocess import Popen, PIPE
+try:
+	from subprocess import Popen, PIPE
+	lowversion=False
+except:
+	lowversion=True	
 import re
 from optparse import OptionParser
 import threading
@@ -195,6 +199,8 @@ SIGNS=[
 'webmin|.*MiniServ',
 'webmin|^0\.0\.0\.0:.*:[0-9]',
 'websphere-javaw|^\x15\x00\x00\x00\x02\x02\x0a']
+
+
 
 
 #For python2.4 Queue class...
@@ -625,38 +631,11 @@ def findhost(ip,port,hostname,ssl=False):
 			print hostname,'running on',ip+':'+str(port),'Title:',title
 		lock.release()		
 	c.close()	
-
-def parseIPlist(filename):
-	iplist=[]
-	try:
-		f = open(filename)
-	except:
-		print 'File not found'
-		exit()
-	lines = f.readlines()
-	cnt=1
-	for ipaddr in lines:
-		ipaddr=ipaddr.strip()
-		cnt+=1
-		try:
-			sk.inet_aton(ipaddr)
-			iplist.append(ipaddr)
-		except:
-			if not validateCIDRBlock(ipaddr):
-				print 'IP address not valid at line '+cnt
-				sys.exit()
-			else:
-				iplist=iplist+listCIDR(ipaddr)
-				
-	f.close()
-	return set(iplist)
-
 	
 if __name__ == "__main__":
 	usage="usage: insightscan.py <hosts[/24|/CIDR]> [start port] [end port] -t threads\n\nExample: insightscan.py 192.168.0.0/24 1 1024 -t 20"
 	parser = OptionParser(usage=usage)
 	parser.add_option("-t", "--threads", dest="NUM",help="Maximum threads, default 50")
-	parser.add_option("-I", "--iplist", dest="iplist",help="Load IP list from file, use IP or CIDR, one per line")	
 	parser.add_option("-T", "--timeout", dest="TIMEOUT",help="Scan timeout, per thread")
 	parser.add_option("-n", "--network", dest="network",help="Quick Network discovery, find reachable networks. Local IP range only. A=10.0.0.0-10.255.255.255\nB=172.16.0.0-172.31.255.255\nC=192.168.0.0-192.168.255.255\nExample: -n B will try Class B addresses")
 	parser.add_option("-H", "--findhost", dest="hostname",help="Help you find which IP address is running a particular virtual host.\nExample: 192.168.0.0/24 -H example.com")
@@ -668,6 +647,12 @@ if __name__ == "__main__":
 	parser.add_option("-l", '--genlist', action="store_true", dest="genlist",help="Output a list, ordered by port number(service, with -S option),for THC-Hydra IP list")
 	parser.add_option("-L", '--genfile', action="store_true", dest="genfile",help="Put the IP list in separate files named by port number(service, with -S option). Implies -l option.\nExample: IPs with port 445 opened will be put into 445.txt")
 	(options, args) = parser.parse_args()
+
+	if lowversion:
+		print "Python version too low, cannot use ping...\n"
+		options.noping=True
+		options.noscan=False
+		options.network=None
 	if options.NUM !=None and options.NUM!=0:
 		NUM=int(options.NUM)
 		print 'Scanning with',NUM,'threads...'
@@ -676,31 +661,27 @@ if __name__ == "__main__":
 	if options.network!=None:
 		networkdiscovery(options.network)
 		sys.exit()	
-	if len(args)<1 and options.iplist==None:
+	if len(args)<1:
 		parser.print_help()
 		sys.exit()
 	if options.noping== True and options.noscan == True:
 		print 'ERROR: Cannot use -N and -P together'
 		sys.exit()
-	iplist=[]
-	if options.iplist==None:
-		ipaddr=args[0]
-		if len(args)==2:
-			print 'Must specify end port'
+	iplist=[]	
+	ipaddr=args[0]
+	if len(args)==2:
+		print 'Must specify end port'
+		sys.exit()
+	try:
+		sk.inet_aton(ipaddr)
+		iplist.append(ipaddr)
+	except:		
+		if not validateCIDRBlock(ipaddr):
+			print 'IP address not valid!'
 			sys.exit()
-		try:
-			sk.inet_aton(ipaddr)
-			iplist.append(ipaddr)
-		except:		
-			if not validateCIDRBlock(ipaddr):
-				print 'IP address not valid!'
-				sys.exit()
-			else:
-				iplist=listCIDR(ipaddr)
-	else:
-		iplist=parseIPlist(options.iplist)
-	#print iplist	
-	if options.iplist==None and len(args)==3:
+		else:
+			iplist=listCIDR(ipaddr)
+	if len(args)==3:
 		startport=int(args[1])
 		endport=int(args[2])
 		if startport>endport:
@@ -709,20 +690,12 @@ if __name__ == "__main__":
 		PORTS=[]
 		for i in xrange(startport,endport+1):
 			PORTS.append(i)
-	if options.iplist!=None and len(args)==2:
-		startport=int(args[0])
-		endport=int(args[1])
-		if startport>endport:
-			print 'start port must be smaller or equal to end port'
-			sys.exit()
-		PORTS=[]
-		for i in xrange(startport,endport+1):
-			PORTS.append(i)		
 	if options.PORTS!= None:
 		PORTS=[int(pn) for pn in options.PORTS.split(',') ]
 	global page		
 	page=''
 #start ping threads
+
 	if options.noping != True:
 		print "Scanning for live machines...\n"
 		global pinglist
