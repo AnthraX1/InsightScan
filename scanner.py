@@ -204,7 +204,7 @@ SIGNS=[
 
 
 #For python2.4 Queue class...
-if sys.version_info[1]==4:
+if sys.version_info[1]<=4:
 	class Queue(Queue):
 		def __init__(self, maxsize=0):
 			self.maxsize = maxsize
