@@ -2,25 +2,30 @@
 #!/usr/bin/env python
 
 '''
- ______							  __	  __	  
-/\__  _\				  __		/\ \	/\ \__   
-\/_/\ \/	 ___	 ____/\_\	 __\ \ \___\ \ ,_\  
-   \ \ \   /' _ `\  /',__\/\ \  /'_ `\ \  _ `\ \ \/  
-	\_\ \__/\ \/\ \/\__, `\ \ \/\ \L\ \ \ \ \ \ \ \_ 
-	/\_____\ \_\ \_\/\____/\ \_\ \____ \ \_\ \_\ \__\
-	\/_____/\/_/\/_/\/___/  \/_/\/___L\ \/_/\/_/\/__/
-								  /\____/			
-								  \_/__/			 
- __ Anthr@X		__				
-/\ \			  /\ \			   
-\ \ \		 __  \ \ \____	____  
- \ \ \  __  /'__`\ \ \ '__`\  /',__\ 
-  \ \ \L\ \/\ \L\.\_\ \ \L\ \/\__, `\
-   \ \____/\ \__/.\_\\ \_,__/\/\____/
-	\/___/  \/__/\/_/ \/___/  \/___/ 
+  ___  ________   ________  ___  ________  ___  ___  _________   
+|\  \|\   ___  \|\   ____\|\  \|\   ____\|\  \|\  \|\___   ___\ 
+\ \  \ \  \\ \  \ \  \___|\ \  \ \  \___|\ \  \\\  \|___ \  \_| 
+ \ \  \ \  \\ \  \ \_____  \ \  \ \  \  __\ \   __  \   \ \  \  
+  \ \  \ \  \\ \  \|____|\  \ \  \ \  \|\  \ \  \ \  \   \ \  \ 
+   \ \__\ \__\\ \__\____\_\  \ \__\ \_______\ \__\ \__\   \ \__\
+    \|__|\|__| \|__|\_________\|__|\|_______|\|__|\|__|    \|__|
+                   \|_________|                                 
+                                                                
+                                                                
+
+ ___       ________  ________  ________      
+|\  \     |\   __  \|\   __  \|\   ____\     
+\ \  \    \ \  \|\  \ \  \|\ /\ \  \___|_    
+ \ \  \    \ \   __  \ \   __  \ \_____  \   
+  \ \  \____\ \  \ \  \ \  \|\  \|____|\  \  
+   \ \_______\ \__\ \__\ \_______\____\_\  \ 
+    \|_______|\|__|\|__|\|_______|\_________\
+                                 \|_________|
+                                             
+By Anthr@X
 									 
 '''
-#V1.00
+#V1.01
 
 import platform
 import sys
@@ -257,7 +262,13 @@ if sys.version_info[1]<=4:
 				self.unfinished_tasks += 1
 				self.not_empty.notify()
 			finally:
-				self.not_full.release()				
+				self.not_full.release()	
+
+def randget(queue):
+  from random import randrange
+  queue.rotate(randrange(0,queue._qsize()+1))
+  return queue.get()
+
 
 # convert an IP address from its dotted-quad format to its
 # 32 binary digit representation
@@ -341,7 +352,7 @@ def validateCIDRBlock(b):
 def pinger():
 	global pinglist
 	while True:
-		ip=q.get()
+		ip=randget(q)
 		if platform.system()=='Linux':
 			p=Popen(['ping','-c 2',ip],stdout=PIPE)
 			m = re.search('(\d)\sreceived', p.stdout.read())
@@ -360,7 +371,7 @@ def pingsubnet(q):
 	global pinglist
 	pinglist=[]
 	while True:
-		tup=q.get()
+		tup=randget(q)
 		(gt,bc)=tup
 		sys.stdout.write('.')
 		if platform.system()=='Linux':
@@ -430,7 +441,7 @@ def networkdiscovery(subclass):
 def scanipport():
 	global lock
 	while True:
-		host,port=sq.get()
+		host,port=randget(sq)
 		sd=sk.socket(sk.AF_INET, sk.SOCK_STREAM)
 		sd.settimeout(TIMEOUT)		
 		try:
@@ -461,7 +472,7 @@ def scanipport():
 def scanservice():
 	global signs,lock
 	while True:
-		host,port=sq.get()
+		host,port=randget(sq)
 		sd=sk.socket(sk.AF_INET, sk.SOCK_STREAM)
 		sd.settimeout(TIMEOUT)
 		service='Unknown'
