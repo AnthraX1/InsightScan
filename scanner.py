@@ -265,9 +265,9 @@ if sys.version_info[1]<=4:
 				self.not_full.release()	
 
 def randget(queue):
-  from random import randrange
-  queue.rotate(randrange(0,queue._qsize()+1))
-  return queue.get()
+	from random import randrange
+	queue.rotate(randrange(0,queue._qsize()+1))
+	return queue.get()
 
 
 # convert an IP address from its dotted-quad format to its
