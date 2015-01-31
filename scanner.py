@@ -264,10 +264,11 @@ if sys.version_info[1]<=4:
 			finally:
 				self.not_full.release()	
 
-def randget(queue):
-	from random import randrange
-	queue.rotate(randrange(0,queue._qsize()+1))
-	return queue.get()
+class Queue(Queue):
+	def randget(self):
+		from random import randrange
+		self.queue.rotate(randrange(0,self._qsize()+1))
+		return self.get()
 
 
 # convert an IP address from its dotted-quad format to its
@@ -352,7 +353,7 @@ def validateCIDRBlock(b):
 def pinger():
 	global pinglist
 	while True:
-		ip=randget(q)
+		ip=q.randget()
 		if platform.system()=='Linux':
 			p=Popen(['ping','-c 2',ip],stdout=PIPE)
 			m = re.search('(\d)\sreceived', p.stdout.read())
@@ -371,7 +372,7 @@ def pingsubnet(q):
 	global pinglist
 	pinglist=[]
 	while True:
-		tup=randget(q)
+		tup=q.randget()
 		(gt,bc)=tup
 		sys.stdout.write('.')
 		if platform.system()=='Linux':
@@ -441,7 +442,7 @@ def networkdiscovery(subclass):
 def scanipport():
 	global lock
 	while True:
-		host,port=randget(sq)
+		host,port=sq.randget()
 		sd=sk.socket(sk.AF_INET, sk.SOCK_STREAM)
 		sd.settimeout(TIMEOUT)		
 		try:
@@ -472,7 +473,7 @@ def scanipport():
 def scanservice():
 	global signs,lock
 	while True:
-		host,port=randget(sq)
+		host,port=sq.randget()
 		sd=sk.socket(sk.AF_INET, sk.SOCK_STREAM)
 		sd.settimeout(TIMEOUT)
 		service='Unknown'
